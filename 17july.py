@@ -2,6 +2,66 @@ import pandas as pd
 import os
 from datetime import datetime
 
+import pandas as pd
+import os
+from datetime import datetime
+
+def append_to_output_file(new_data_df, output_file_path, key_column):
+    """
+    Append new data to existing CSV file, updating existing rows if key_column matches.
+    
+    Args:
+        new_data_df: pandas DataFrame with new data to append
+        output_file_path: path to the output CSV file
+        key_column: column name to check for existing values
+    """
+    
+    # Check if output file exists
+    if os.path.exists(output_file_path):
+        # Read existing data
+        try:
+            existing_df = pd.read_csv(output_file_path)
+            
+            # Find rows that need to be updated
+            existing_keys = existing_df[key_column].values
+            new_keys = new_data_df[key_column].values
+            
+            # Separate new data into update and append
+            update_mask = new_data_df[key_column].isin(existing_keys)
+            update_data = new_data_df[update_mask]
+            append_data = new_data_df[~update_mask]
+            
+            # Update existing rows
+            for idx, row in update_data.iterrows():
+                key_value = row[key_column]
+                existing_df.loc[existing_df[key_column] == key_value, :] = row.values
+            
+            # Append new rows
+            if len(append_data) > 0:
+                combined_df = pd.concat([existing_df, append_data], ignore_index=True)
+            else:
+                combined_df = existing_df.copy()
+            
+            print(f"Updated {len(update_data)} rows, appended {len(append_data)} rows. Total rows: {len(combined_df)}")
+            
+        except Exception as e:
+            print(f"Error reading existing file: {e}")
+            print("Creating new file instead...")
+            combined_df = new_data_df
+            
+    else:
+        # Create new file
+        combined_df = new_data_df
+        print(f"Created new file with {len(new_data_df)} rows")
+    
+    # Save the combined data
+    try:
+        combined_df.to_csv(output_file_path, index=False)
+        print(f"Successfully saved to: {output_file_path}")
+        
+    except Exception as e:
+        print(f"Error saving file: {e}")
+
 def append_to_output_file(new_data_df, output_file_path):
 “””
 Append new data to existing CSV file, or create new file if it doesn’t exist.
