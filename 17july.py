@@ -177,3 +177,76 @@ except Exception as e:
 
 if **name** == “**main**”:
 main()
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+# Example data - replace with your actual x and y arrays
+x = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+y = np.array([1.2, 1.8, 3.1, 5.2, 8.9, 15.1, 25.8, 44.2, 75.3, 128.5, 218.7])
+
+# Define the three exponential functions
+def exponential(x, a, b):
+    """Standard exponential: y = a * e^(b*x)"""
+    return a * np.exp(b * x)
+
+def power_law(x, a, b):
+    """Power law: y = a * x^b"""
+    return a * np.power(x, b)
+
+def exponential_offset(x, a, b, c):
+    """Exponential with offset: y = a * e^(b*x) + c"""
+    return a * np.exp(b * x) + c
+
+# Fit the curves
+try:
+    # Fit standard exponential
+    popt1, _ = curve_fit(exponential, x, y, p0=[1, 0.1])
+    
+    # Fit power law (need to avoid x=0 if present)
+    x_power = x[x > 0]
+    y_power = y[x > 0]
+    popt2, _ = curve_fit(power_law, x_power, y_power, p0=[1, 2])
+    
+    # Fit exponential with offset
+    popt3, _ = curve_fit(exponential_offset, x, y, p0=[1, 0.1, 0])
+    
+    # Generate smooth curves for plotting
+    x_smooth = np.linspace(x.min(), x.max(), 200)
+    y1 = exponential(x_smooth, *popt1)
+    y2 = power_law(x_smooth, *popt2)
+    y3 = exponential_offset(x_smooth, *popt3)
+    
+    # Create the plot
+    plt.figure(figsize=(10, 6))
+    
+    # Plot original data
+    plt.scatter(x, y, color='red', s=50, zorder=5, label='Data')
+    
+    # Plot fitted curves
+    plt.plot(x_smooth, y1, 'b-', linewidth=2, 
+             label=f'Exponential: y = {popt1[0]:.2f}·e^({popt1[1]:.2f}x)')
+    plt.plot(x_smooth, y2, 'g-', linewidth=2, 
+             label=f'Power law: y = {popt2[0]:.2f}·x^{popt2[1]:.2f}')
+    plt.plot(x_smooth, y3, 'm-', linewidth=2, 
+             label=f'Exp+offset: y = {popt3[0]:.2f}·e^({popt3[1]:.2f}x) + {popt3[2]:.2f}')
+    
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.title('Exponential Curve Fitting Comparison')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+    
+    # Print fitted parameters
+    print("Fitted Parameters:")
+    print(f"1. Exponential: a={popt1[0]:.4f}, b={popt1[1]:.4f}")
+    print(f"2. Power law: a={popt2[0]:.4f}, b={popt2[1]:.4f}")
+    print(f"3. Exponential with offset: a={popt3[0]:.4f}, b={popt3[1]:.4f}, c={popt3[2]:.4f}")
+    
+except Exception as e:
+    print(f"Error in curve fitting: {e}")
+    print("Try adjusting initial parameter guesses or check your data.")
